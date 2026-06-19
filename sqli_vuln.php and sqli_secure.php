@@ -74,3 +74,14 @@ if ($stmt) {
 $conn->close();
 ?>
 
+
+-----------------------------
+test cases:
+
+Input	                    Result
+?id=1	                    Accepted
+?id=123	                    Accepted
+?id=1 OR 1=1	            Invalid ID
+?id=' OR '1'='1	            Invalid ID
+?id=abc	                    Invalid ID
+-----------------------------
