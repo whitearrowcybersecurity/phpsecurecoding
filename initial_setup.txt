@@ -99,3 +99,45 @@ $conn->close();
 ----------------------------------------------------------------------
 
 
+
+Because the application directly concatenates input into SQL:
+
+$query = "SELECT username, email FROM users WHERE id = " . $id;
+
+an attacker can alter the query logic.
+
+For example, supplying a value that makes the condition always true can return more records than intended. This demonstrates why parameterized queries are necessary.
+
+You can observe this behavior in your isolated lab and then compare it with a secure version using prepared statements.
+
+
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+
+Secure Version (Recommended)
+----------------------------------------------------------------------
+$id = $_GET['id'];
+$query = "SELECT username, email FROM users WHERE id = " . $id;
+$result = $conn->query($query);
+
+----------------------------------------------------------------------
+with
+----------------------------------------------------------------------
+
+$id = $_GET['id'];
+
+$stmt = $conn->prepare(
+    "SELECT username, email FROM users WHERE id = ?"
+);
+
+$stmt->bind_param("i", $id);
+$stmt->execute();
+
+$result = $stmt->get_result();
+
+----------------------------------------------------------------------
+This prevents SQL injection because user input is treated as data rather than executable SQL.
+----------------------------------------------------------------------
+
+
+
