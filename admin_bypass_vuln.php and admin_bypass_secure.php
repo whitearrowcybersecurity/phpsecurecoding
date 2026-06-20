@@ -133,3 +133,12 @@ if (isset($_POST['delete_id'])) {
     </form>
 </body>
 </html>
+
+
+
+-------------------------
+
+authorization controls must follow a Deny-by-Default philosophy. 
+If an endpoint handles creating, reading, updating, or deleting data (CRUD), access control rules should be evaluated at the top of the script before database models load or logic executes.
+
+-------------------------
