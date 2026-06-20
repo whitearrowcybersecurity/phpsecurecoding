@@ -53,3 +53,9 @@ An attacker notices that changing the account_id integer shifts the record being
 The attacker modifies the URL parameters directly within the browser address bar to target the administrator account: http://localhost/idor_vuln.php?account_id=1.
 
 The Impact: Because the backend script checks whether the target record exists, but fails to verify who owns it, the attacker completely bypasses horizontal access barriers and displays sensitive details (like credit card numbers and emails) belonging to any user in the system.
+
+
+
+-------------------------------------------------------
+IDOR issues are rarely caught by automated static analysis tools (SAST) because the syntax itself (SELECT ... WHERE id = ?) is syntactically correct and safe from injection. 
+IDOR is a logical flaw that can only be resolved by writing explicit, programmatic access rules or utilizing an Access Control Matrix.
