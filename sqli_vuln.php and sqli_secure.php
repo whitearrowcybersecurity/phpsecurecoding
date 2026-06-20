@@ -85,3 +85,41 @@ Input	                    Result
 ?id=' OR '1'='1	            Invalid ID
 ?id=abc	                    Invalid ID
 -----------------------------
+
+
+
+if ($id === false || $id === null) {
+    http_response_code(400);
+    exit("Bad Request");
+}
+
+For a URL parameter intended to be a numeric user ID, accepting ?id=1 and ?id=123 is correct and secure.
+
+---------------------------------------
+$id = filter_input(
+    INPUT_GET,
+    'id',
+    FILTER_VALIDATE_INT,
+    [
+        'options' => [
+            'min_range' => 1,
+            'max_range' => 100000
+        ]
+    ]
+);
+
+if ($id === false || $id === null) {
+    http_response_code(400);
+    exit("Bad Request");
+}
+
+$stmt = $conn->prepare(
+    "SELECT username, email FROM users WHERE id = ?"
+);
+
+$stmt->bind_param("i", $id);
+$stmt->execute();
+
+
+
+-----------------------------------
