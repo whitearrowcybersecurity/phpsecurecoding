@@ -55,6 +55,59 @@ The attacker modifies the URL parameters directly within the browser address bar
 The Impact: Because the backend script checks whether the target record exists, but fails to verify who owns it, the attacker completely bypasses horizontal access barriers and displays sensitive details (like credit card numbers and emails) belonging to any user in the system.
 
 
+-------------------------------------------------------
+
+<?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+session_start();
+// SIMULATION: User ID 2 is logged in.
+$_SESSION['user_id'] = 2; 
+
+$conn = new mysqli("localhost", "db_user", "db_pass", "secure_db");
+
+if ($conn->connect_error) {
+    die("Database Connection Failed: " . $conn->connect_error);
+}
+
+if (!isset($_GET['account_id'])) {
+    die("Please append an account ID to the URL. Example: ?account_id=2");
+}
+
+$account_id = $_GET['account_id'];
+$logged_in_user = $_SESSION['user_id'];
+
+// PATCH: Server-Side Authorization Verification
+// We force a check ensuring the requested item matches the session token.
+if ($account_id != $logged_in_user) {
+    header('HTTP/1.1 403 Forbidden');
+    echo "<h2>Access Denied</h2>";
+    echo "<p style='color:red;'>Error 403: You are not authorized to view this profile record.</p>";
+    exit();
+}
+
+// Proceed securely only after authorization completes successfully
+$stmt = $conn->prepare("SELECT username, email, credit_card_number FROM accounts WHERE id = ?");
+$stmt->bind_param("i", $account_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($row = $result->fetch_assoc()) {
+    echo "<h2>Account Profile Dashboard (Secure File)</h2>";
+    echo "<strong>Username:</strong> " . htmlspecialchars($row['username']) . "<br>";
+    echo "<strong>Email:</strong> " . htmlspecialchars($row['email']) . "<br>";
+    echo "<strong>Secret Data (CC):</strong> " . htmlspecialchars($row['credit_card_number']) . "<br>";
+} else {
+    echo "Account record not found.";
+}
+
+$stmt->close();
+$conn->close();
+?>
+
+
+
 
 -------------------------------------------------------
 IDOR issues are rarely caught by automated static analysis tools (SAST) because the syntax itself (SELECT ... WHERE id = ?) is syntactically correct and safe from injection. 
