@@ -51,3 +51,43 @@ Note:
 escapeshellarg() and escapeshellcmd() are different. 
 escapeshellarg() treats the input as a single argument for a command, whereas escapeshellcmd() escapes characters that might allow running entirely different commands. 
 When passing a single variable parameter, escapes
+
+
+----------------
+common_secure.php
+-----------------
+<?php
+if (isset($_POST['ip'])) {
+    $target = $_POST['ip'];
+
+    // PATCH LAYER 1: Strict Input Validation (Allow-listing)
+    // Validate that the input is strictly a well-formed IPv4 or IPv6 address.
+    if (!filter_var($target, FILTER_VALIDATE_IP)) {
+        die("Error: Invalid IP address format provided.");
+    }
+
+    // PATCH LAYER 2: Context-Specific Escaping
+    // escapeshellarg() wraps the argument in single quotes and escapes existing quotes.
+    // This prevents the shell from interpreting spaces or control characters as commands.
+    $safe_target = escapeshellarg($target);
+
+    // Build the command safely
+    $cmd = "ping -c 3 " . $safe_target;
+    
+    // Execute the command safely
+    $output = shell_exec($cmd);
+
+    echo "<pre>" . htmlspecialchars($output) . "</pre>";
+}
+?>
+
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Network Ping Utility (Secure)</h2>
+    <form method="POST">
+        Enter IP Address: <input type="text" name="ip">
+        <input type="submit" value="Ping">
+    </form>
+</body>
+</html>
