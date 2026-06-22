@@ -60,6 +60,7 @@ VALUES
 
 SELECT * FROM users;
 
+SELECT * from users where username='john';
 
 -----------------------------------
 
