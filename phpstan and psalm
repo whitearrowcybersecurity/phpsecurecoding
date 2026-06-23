@@ -1,0 +1,148 @@
+Create:
+nano src/UserManager.php
+
+Paste:
+<?php
+
+class UserManager
+{
+    public function getUserRole()
+    {
+        if ($isAdmin) {
+            return "Admin";
+        }
+
+        return 123;
+    }
+}
+
+
+Run:
+vendor/bin/phpstan analyse src --level=max
+
+PHPStan will identify:
+Undefined variable $isAdmin
+
+and complain about inconsistent return types.
+
+---
+
+Does PHPStan detect SQL Injection?
+
+Example:
+$id = $_GET['id'];
+
+$sql =
+"SELECT * FROM users WHERE id = $id";
+
+Run PHPStan.
+
+Result:
+No SQL Injection finding
+
+Why?
+
+Because PHPStan is primarily:
+Static Analysis not Security SAST Tool.
+
+---
+
+What PHPStan Detects Well
+
+Undefined variables
+
+Null dereference
+
+Wrong return types
+
+Wrong parameter types
+
+Missing methods
+
+Missing properties
+
+Dead code
+
+Type confusion
+
+---
+
+What PHPStan Does NOT Detect Well
+
+❌ SQL Injection
+
+❌ XSS
+
+❌ CSRF
+
+❌ Authentication flaws
+
+❌ Business logic issues
+
+❌ Access control problems
+
+---
+
+# Installing Psalm
+
+Now show participants a second tool.
+
+Install:
+composer require --dev vimeo/psalm
+
+Initialize:
+vendor/bin/psalm --init
+
+Psalm creates:
+psalm.xml
+
+---
+
+# Run Psalm
+vendor/bin/psalm
+
+
+Psalm output is usually more detailed.
+
+Example:
+UndefinedVariable
+
+PossiblyNullPropertyFetch
+
+InvalidOperand
+
+----------------------------
+
+Vulnerable Lab for Training
+
+Create:
+<?php
+
+class SecurityLab
+{
+    public function process()
+    {
+        $id = $_GET['id'];
+
+        if ($admin) {
+            echo "Admin";
+        }
+
+        $user = null;
+
+        echo $user->name;
+
+        return $id + "abc";
+    }
+}
+
+Then:
+vendor/bin/phpstan analyse src --level=max
+
+What you should find?:
+
+1. Read findings
+2. Identify root cause
+3. Fix code
+4. Re-run scan
+5. Verify clean report
