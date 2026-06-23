@@ -15,7 +15,6 @@ Below is a secure PHP registration form with:
 
 # 1. Create Database
 
-```sql
 CREATE DATABASE secure_registration;
 
 USE secure_registration;
@@ -28,13 +27,13 @@ CREATE TABLE users (
     id_proof VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-```
+
 
 ---
 
 # 2. Project Structure
 
-```text
+text
 project/
 │
 ├── config.php
@@ -43,20 +42,18 @@ project/
 │
 └── css/
     └── style.css
-```
+
 
 Create the uploads folder:
 
-```bash
 mkdir uploads
 chmod 755 uploads
-```
+
 
 ---
 
 # 3. Database Connection (config.php)
 
-```php
 <?php
 
 $host = "localhost";
@@ -81,13 +78,11 @@ try {
     die("Database Connection Failed");
 }
 ?>
-```
 
 ---
 
 # 4. Registration Form (register.php)
 
-```php
 <?php
 session_start();
 require_once "config.php";
@@ -323,7 +318,6 @@ Register
 
 </body>
 </html>
-```
 
 ---
 
@@ -333,25 +327,21 @@ Disable PHP execution inside uploads folder.
 
 Create:
 
-```text
 uploads/.htaccess
-```
 
-```apache
+-----------------------
 php_flag engine off
 
 <FilesMatch "\.(php|php5|phtml)$">
     Deny from all
 </FilesMatch>
-```
 
----
+-----------------------
 
 # 6. MySQL User Creation (Production)
 
 Instead of using root:
 
-```sql
 CREATE USER 'appuser'@'localhost'
 IDENTIFIED BY 'StrongPassword@123';
 
@@ -360,14 +350,11 @@ ON secure_registration.*
 TO 'appuser'@'localhost';
 
 FLUSH PRIVILEGES;
-```
 
 Update `config.php`:
 
-```php
 $username = "appuser";
 $password = "StrongPassword@123";
-```
 
 ---
 
