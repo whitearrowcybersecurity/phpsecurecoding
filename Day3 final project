@@ -1,0 +1,300 @@
+USE secure_db;
+
+-- Create secure enterprise documents table
+CREATE TABLE IF NOT EXISTS documents (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    confidential_content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES accounts(id) ON DELETE CASCADE
+);
+
+-- Clear old records and add sample test data
+DELETE FROM documents;
+INSERT INTO documents (id, user_id, title, confidential_content) VALUES 
+(101, 1, 'Q2 Corporate Financial Strategy', 'CONFIDENTIAL: Projected revenue increase 15%. Target acquisition: Company X.'),
+(102, 2, 'Developer Performance Reviews', 'Internal Team Reviews: Developer John Doe met all secure coding milestones successfully.');
+
+
+--------------------------------------------------------------
+
+<?php
+/**
+ * Secure Enterprise Document Vault
+ * Architecture: Defensive Monolith Reference Code
+ * Implemented Protections: CSRF, SQLi, IDOR, XSS, Session Hijacking
+ */
+
+// 1. HARDENED SESSION MANAGEMENT
+// Enforce strict cookie security attributes before starting runtime memory space
+session_start([
+    'cookie_lifetime' => 0,                      // Session expires when browser closes
+    'cookie_secure'   => false,                  // Set to true in production over HTTPS
+    'cookie_httponly' => true,                   // Completely blocks JavaScript cookie extraction (XSS defense)
+    'cookie_samesite' => 'Strict',               // Mitigates cross-site cookie transmission (CSRF mitigation)
+    'use_strict_mode' => true                    // Prevents session fixation attacks
+]);
+
+// SIMULATION: Simulate authenticated employee state (User ID 2: "regular_developer")
+if (!isset($_SESSION['user_id'])) {
+    $_SESSION['user_id'] = 2;
+    $_SESSION['username'] = 'regular_developer';
+}
+
+// 2. CRYPTOGRAPHIC CSRF TOKEN INITIALIZATION
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); // CSPRNG Token generation
+}
+
+// 3. ENTERPRISE PDO CONNECTION ENGINE
+$db_host = "localhost";
+$db_user = "db_user";
+$db_pass = "db_pass";
+$db_name = "secure_db";
+
+try {
+    // Force strict error handling configurations and native preparation semantics
+    $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass, [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Turns database errors into catching exceptions
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // Forces safe structured array mappings
+        PDO::ATTR_EMULATE_PREPARES   => false,                  // Forces real server prepared statements
+    ]);
+} catch (PDOException $e) {
+    // Structural security mitigation: suppress raw connection text to prevent path exposure
+    error_log("Database connection failure: " . $e->getMessage());
+    die("<p style='font-family:sans-serif; color:red;'>System configuration error encountered. Please check system audit logs.</p>");
+}
+
+$status_message = "";
+$status_type = "";
+
+// 4. CONTROLLER ACTION ROUTING (STATE CHANGES)
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    
+    // CSRF PROTECTION LAYER: Enforce mandatory global validation token verification
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        header('HTTP/1.1 403 Forbidden');
+        die("Security Interception: Cryptographic transaction verification handshake failed.");
+    }
+
+    // Action A: Safely Create a Vault Document (Mass Assignment & SQLi Defended)
+    if (isset($_POST['action']) && $_POST['action'] === 'create_doc') {
+        // Strict mapping of primitive values
+        $title = trim($_POST['title'] ?? '');
+        $content = trim($_POST['content'] ?? '');
+        
+        if ($title !== '' && $content !== '') {
+            // Parameterized structure guarantees input separation from execution command text
+            $stmt = $pdo->prepare("INSERT INTO documents (user_id, title, confidential_content) VALUES (:user_id, :title, :content)");
+            $stmt->execute([
+                ':user_id' => $_SESSION['user_id'], // Controlled by session context, never client form values
+                ':title'   => $title,
+                ':content' => $content
+            ]);
+            $status_message = "Document encrypted and saved to enterprise cluster.";
+            $status_type = "success";
+        } else {
+            $status_message = "Data validation error: Fields cannot be left blank.";
+            $status_type = "error";
+        }
+    }
+
+    // Action B: Safely Delete a Vault Document (IDOR Defended)
+    if (isset($_POST['action']) && $_POST['action'] === 'delete_doc') {
+        $target_doc_id = intval($_POST['doc_id'] ?? 0);
+
+        // IDOR DEFENSE: The query explicitly links record ID AND owner user_id together.
+        // Even if an attacker passes a third-party document ID, the transaction safely drops out.
+        $stmt = $pdo->prepare("DELETE FROM documents WHERE id = :doc_id AND user_id = :user_id");
+        $stmt->execute([
+            ':doc_id'  => $target_doc_id,
+            ':user_id' => $_SESSION['user_id']
+        ]);
+
+        if ($stmt->rowCount() > 0) {
+            $status_message = "Document successfully purged from memory logs.";
+            $status_type = "success";
+        } else {
+            $status_message = "Authorization Error: Access denied or record does not exist.";
+            $status_type = "error";
+        }
+    }
+}
+
+// 5. DATA INGESTION MATRIX FOR ACTIVE SECTOR
+// Query automatically filters down exclusively to items permitted to the active session user
+$query_stmt = $pdo->prepare("SELECT id, title, confidential_content, created_at FROM documents WHERE user_id = :user_id");
+$query_stmt->execute([':user_id' => $_SESSION['user_id']]);
+$user_vault_records = $query_stmt->fetchAll();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Enterprise Security Document Vault</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen flex flex-col">
+
+    <header class="bg-slate-900 text-white p-5 border-b-4 border-cyan-500 shadow-lg">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🔒</span>
+                <h1 class="text-2xl font-black tracking-wider">SECURE_VAULT v2.6</h1>
+            </div>
+            <div class="bg-slate-800 text-xs px-4 py-2 rounded-md border border-slate-700 font-mono">
+                Operator Context: <span class="text-cyan-400 font-bold"><?= htmlspecialchars($_SESSION['username'], ENT_QUOTES, 'UTF-8') ?></span> [ID: <?= intval($_SESSION['user_id']) ?>]
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-6xl w-full mx-auto p-6 space-y-6">
+
+        <?php if ($status_message !== ""): ?>
+            <div class="p-4 rounded-lg border text-sm font-semibold shadow-xs <?= $status_type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800' ?>">
+                <?= htmlspecialchars($status_message, ENT_QUOTES, 'UTF-8') ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <section class="bg-white p-6 rounded-xl shadow-xs border border-gray-200 lg:col-span-1">
+                <h2 class="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 mb-4">📤 Commit New Payload</h2>
+                
+                <form method="POST" action="corporate_vault.php" class="space-y-4">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="hidden" name="action" value="create_doc">
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Payload Title</label>
+                        <input type="text" name="title" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:outline-none focus:border-cyan-500 transition-colors" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Confidential Body Records</label>
+                        <textarea name="content" rows="4" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2.5 text-sm focus:outline-none focus:border-cyan-500 transition-colors" required></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2 px-4 rounded-lg font-bold text-sm shadow-md transition-colors cursor-pointer">
+                        Encrypt and Commit Record
+                    </button>
+                </form>
+            </section>
+
+            <section class="lg:col-span-2 space-y-4">
+                <div class="bg-white p-6 rounded-xl shadow-xs border border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3 mb-4">📁 Active Vault Holdings</h2>
+
+                    <?php if (count($user_vault_records) > 0): ?>
+                        <div class="space-y-4">
+                            <?php foreach ($user_vault_records as $doc): ?>
+                                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 relative group hover:border-gray-300 transition-colors">
+                                    
+                                    <h3 class="font-bold text-gray-900 text-sm pr-12"><?= htmlspecialchars($doc['title'], ENT_QUOTES, 'UTF-8') ?></h3>
+                                    <span class="block text-[10px] text-gray-400 font-mono mt-0.5"><?= htmlspecialchars($doc['created_at'], ENT_QUOTES, 'UTF-8') ?> | System Index ID: <?= intval($doc['id']) ?></span>
+                                    
+                                    <p class="mt-2 text-xs font-mono bg-white border border-gray-100 p-2.5 rounded-md text-gray-600 break-all shadow-inner">
+                                        <?= htmlspecialchars($doc['confidential_content'], ENT_QUOTES, 'UTF-8') ?>
+                                    </p>
+
+                                    <form method="POST" action="corporate_vault.php" class="absolute top-4 right-4">
+                                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8') ?>">
+                                        <input type="hidden" name="action" value="delete_doc">
+                                        <input type="hidden" name="doc_id" value="<?= intval($doc['id']) ?>">
+                                        <button type="submit" class="bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white px-2 py-1 rounded text-[11px] font-bold border border-rose-200 transition-colors cursor-pointer" onclick="return confirm('Execute permanent purge protocol on this record?');">
+                                            Purge
+                                        </button>
+                                    </form>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-sm text-gray-400 text-center py-12 border-2 border-dashed border-gray-200 rounded-xl">
+                            Vault index empty for this authenticated profile context.
+                        </p>
+                    <?php endif; ?>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="bg-slate-900 text-gray-500 py-4 text-center text-xs font-mono mt-12 border-t border-slate-800">
+        Secure Enterprise Vault Architecture Standard Labs. All barriers verified compliant.
+    </footer>
+
+</body>
+</html>
+
+
+
+-------------------------------------------
+
+Test Case 1: Functional Baseline Verification
+Objective: Ensure the system functions properly under normal, authorized parameters.
+
+Execution Path: 1. Open http://localhost/corporate_vault.php in your browser.
+2. In the "Commit New Payload" form, set the Title to Q3 Marketing Plan and the Content to Launch date set for August 1st..
+3. Click Encrypt and Commit Record.
+
+Expected Result: The page refreshes and displays the success alert: "Document encrypted and saved to enterprise cluster." The document is visible in the vault grid with an auto-incremented index (e.g., 103).
+
+
+
+
+-------------------------------------
+
+
+Test Case 2: Cross-Site Request Forgery (CSRF) Simulation
+Objective: Verify that an external malicious actor cannot execute silent state changes on behalf of a victim.
+
+Execution Path:
+
+Open your browser Developer Tools (F12), locate the HTML tree view of the creation form, and double-click the name="csrf_token" input field value attribute.
+
+Intentionally modify the token string to a dummy value (e.g., ATTACKER_TOKEN_VALUE), modifying the transaction signature.
+
+Try adding a new document title and click submit.
+
+Expected Result: The application execution immediately drops out, returning a standard HTTP 403 Forbidden response header with the error text: "Security Interception: Cryptographic transaction verification handshake failed." The backend database layer stays completely untouched.
+
+
+
+
+-----------------------------------
+
+
+
+Test Case 3: Insecure Direct Object Reference (IDOR) Bypass Attempt
+Objective: Prove that a user cannot manipulate account indices to delete documents belonging to other users.
+
+Execution Path:
+
+Note that in your database setup script, Document ID 101 belongs explicitly to User ID 1 (administrator). Our active running session context is forced to User ID 2 (regular_developer).
+
+Inspect the Purge form button code for any visible document on your dashboard inside your browser developer tools.
+
+Double-click the hidden element <input type="hidden" name="doc_id" value="..."> and alter the value parameter to read exactly 101.
+
+Click the Purge button and accept the JavaScript alert box confirmation prompt.
+
+Expected Result: The page reloads and displays the error message: "Authorization Error: Access denied or record does not exist." Log into your database terminal and run SELECT * FROM documents WHERE id = 101; to confirm that the administrator's document was successfully protected from the unauthorized account.
+
+
+-------------------------------------
+
+
+Test Case 4: Reflected/Stored XSS Input Neutralization Test
+Objective: Confirm that raw markup characters are safely stripped of execution capabilities before formatting execution blocks.
+
+Execution Path:
+
+Create another payload document container.
+
+In the Title field input text box, type: <script>alert(document.domain)</script>.
+
+In the Body Text Area content area, input: <img src=invalid_source onerror=alert("Hacked")>.
+
+Submit the transaction to commit it to the local system database.
+
+Expected Result: The script logs the record without error. When rendering the page layout, the actual code characters appear clearly inside the layout box as literal text content blocks rather than executing pop-up windows. Right-click the page source and inspect the output text string to observe that the brackets have been rendered safely as safe HTML entities (&lt; and &gt;).
