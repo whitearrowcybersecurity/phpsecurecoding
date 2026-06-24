@@ -1,3 +1,197 @@
+Objective
+
+We will:
+
+Create a vulnerable PHP application
+Install PHPStan
+Run PHPStan
+Observe findings
+Fix findings
+Re-run PHPStan
+Explain limitations of PHPStan
+Compare with Psalm
+Step 1: Create a New Folder
+mkdir phpstan-training
+cd phpstan-training
+Step 2: Initialize Composer
+composer init
+
+You can simply keep pressing Enter.
+
+Example:
+
+Package name:
+whitearrow/phpstan-training
+
+Description:
+PHPStan Training Lab
+
+Author:
+Hrushikesh
+
+Minimum Stability:
+stable
+
+Package Type:
+project
+
+License:
+
+Step 3: Install PHPStan
+composer require --dev phpstan/phpstan
+
+Verify:
+
+vendor/bin/phpstan --version
+
+Expected:
+
+PHPStan - PHP Static Analysis Tool
+
+Step 4: Create Source Folder
+mkdir src
+
+Step 5: Create Vulnerable Code
+
+Create:
+
+nano src/VulnerableApp.php
+
+Paste:
+
+<?php
+
+class VulnerableApp
+{
+    public function login()
+    {
+        $username = $_POST['username'];
+
+        if ($admin) {
+            echo "Admin Login";
+        }
+
+        $user = null;
+
+        echo $user->name;
+
+        return $username + "test";
+    }
+}
+
+Save.
+
+Step 6: Run PHPStan
+
+Basic scan:
+
+vendor/bin/phpstan analyse src
+
+You should see findings similar to:
+
+Undefined variable: $admin
+
+Cannot access property $name on null
+
+Binary operation "+" between mixed and string
+Step 7: Understand Each Finding
+Finding 1
+if ($admin)
+
+Problem:
+
+$admin
+
+was never defined.
+
+PHPStan:
+
+Undefined variable
+
+Finding 2
+$user = null;
+
+echo $user->name;
+
+Problem:
+
+null->name
+
+will crash.
+
+PHPStan catches it.
+
+Finding 3
+return $username + "test";
+
+PHP treats:
+
+string + string
+
+incorrectly.
+
+PHPStan warns.
+
+Step 8: Fix the Code
+
+Replace with:
+
+<?php
+
+class VulnerableApp
+{
+    public function login(bool $admin): string
+    {
+        $username = $_POST['username'] ?? '';
+
+        if ($admin) {
+            echo "Admin Login";
+        }
+
+        $user = (object)[
+            'name' => 'John'
+        ];
+
+        echo $user->name;
+
+        return $username . "test";
+    }
+}
+
+Notice:
+
+Fixed Undefined Variable
+bool $admin
+Fixed Null Object
+$user = (object)[
+    'name' => 'John'
+];
+Fixed String Concatenation
+
+Wrong:
+
++
+
+Correct:
+
+.
+Step 9: Run Again
+vendor/bin/phpstan analyse src
+
+Expected:
+
+[OK] No errors
+Step 10: Increase Strictness
+
+Default is relatively forgiving.
+
+Run:
+
+vendor/bin/phpstan analyse src --level=max
+
+This is what I recommend for demonstrations.
+
+
 Create:
 nano src/UserManager.php
 
