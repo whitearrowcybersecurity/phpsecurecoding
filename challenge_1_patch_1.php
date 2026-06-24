@@ -1,3 +1,16 @@
+Vulnerable Block
+
+
+-------------------------------------
+$title = $_POST['title'];
+$desc = $_POST['description'];
+
+$query = "INSERT INTO support_tickets (user_id, title, description) VALUES (" . $_SESSION['user_id'] . ", '$title', '$desc')";
+if ($conn->query($query)) { ... }
+
+
+-------------------------------------
+
 $title = trim($_POST['title'] ?? '');
 $desc = trim($_POST['description'] ?? '');
 
